@@ -8,7 +8,9 @@
   export default {
     data () {
       return {
-        picker: null,
+        time: null,
+        landscape: false,
+        ampmInTitle: false,
       }
     },
   }

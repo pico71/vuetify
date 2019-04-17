@@ -10,7 +10,7 @@
   export default {
     data () {
       return {
-        e7: null,
+        time: null,
       }
     },
   }
