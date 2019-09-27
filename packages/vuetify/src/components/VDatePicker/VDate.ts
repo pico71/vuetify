@@ -99,6 +99,7 @@ export const VDateProps = {
   max: String,
   min: String,
   multiple: Boolean,
+  range: Boolean,
   pickerDate: String,
   value: [Array, String] as PropValidator<DatePickerValue>,
   selectedItemsText: {
@@ -126,12 +127,12 @@ export default mixins(
 
   data () {
     const firstDate = this.value && wrapInArray(this.value)[0]
-    const now = this.currentDate || new Date().toISOString()
-    const nowDate = sanitizeDateString(now, 'date')
-    const internalPickerDate = sanitizeDateString(this.pickerDate || firstDate || nowDate, this.type === 'month' ? 'year' : 'month')
+    const currentDate = this.currentDate || new Date().toISOString()
+    const now = sanitizeDateString(currentDate, 'date')
+    const internalPickerDate = sanitizeDateString(this.pickerDate || firstDate || now, this.type === 'month' ? 'year' : 'month')
 
     return {
-      now: nowDate,
+      now,
       internalPickerDate,
       internalDate: this.value ? wrapInArray(this.value).map(date => sanitizeDateString(date, this.type)) : [],
       internalActivePicker: (this.activePicker || this.type) as PickerType,
@@ -139,6 +140,9 @@ export default mixins(
   },
 
   computed: {
+    isMultiple (): boolean {
+      return this.multiple || this.range
+    },
     lastPickedValue (): string | null {
       return this.internalDate.length ? this.internalDate[this.internalDate.length - 1] : null
     },
@@ -168,7 +172,7 @@ export default mixins(
         length: substrOptions[this.type],
       })
 
-      if (this.multiple) {
+      if (this.isMultiple) {
         const length = this.internalDate.length
         if (length < 2) return dates => dates.length ? titleDateFormatter(dates[0]) : this.$vuetify.lang.t(this.selectedItemsText, 0)
         else return dates => this.$vuetify.lang.t(this.selectedItemsText, dates.length)
@@ -261,7 +265,7 @@ export default mixins(
     emitInput () {
       if (!this.internalDate.length) return
 
-      const value = this.multiple ? this.internalDate : this.internalDate[0]
+      const value = this.isMultiple ? this.internalDate : this.internalDate[0]
 
       this.$emit('input', value)
       !this.multiple && this.$emit('change', value)
@@ -269,7 +273,7 @@ export default mixins(
     checkMultipleProp () {
       if (this.value == null) return
       const valueType = this.value.constructor.name
-      const expected = this.multiple ? 'Array' : 'String'
+      const expected = this.isMultiple ? 'Array' : 'String'
       if (valueType !== expected) {
         consoleWarn(`Value must be ${this.multiple ? 'an' : 'a'} ${expected}, got ${valueType}`, this)
       }
@@ -297,7 +301,13 @@ export default mixins(
       this.updateInternalDate(value)
     },
     updateInternalDate (value: string) {
-      if (this.internalDate.includes(value)) {
+      if (this.range) {
+        this.internalDate.length === 2
+          ? this.internalDate = [value]
+          : this.internalDate.push(value)
+
+        this.internalDate.sort()
+      } else if (this.internalDate.includes(value)) {
         this.internalDate = this.internalDate.filter(d => d !== value)
       } else if (this.multiple) {
         this.internalDate.push(value)

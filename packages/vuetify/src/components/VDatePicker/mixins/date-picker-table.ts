@@ -47,7 +47,8 @@ export default mixins(
       type: String,
       required: true,
     },
-    value: [String, Array],
+    value: [String, Array] as PropValidator<string | string[]>,
+    range: Boolean,
   },
 
   data: () => ({
@@ -76,6 +77,13 @@ export default mixins(
     calculatePickerDate (delta: number): string {
       throw new Error('Not implemented')
     },
+    isSelected (value: string) {
+      if (this.range && Array.isArray(this.value) && this.value.length === 2) {
+        return value >= this.value[0] && value <= this.value[1]
+      } else {
+        return Array.isArray(this.value) ? this.value.indexOf(value) !== -1 : value === this.value
+      }
+    },
     genButtonClasses (isAllowed: boolean, isFloating: boolean, isSelected: boolean, isCurrent: boolean) {
       return {
         'v-size--default': !isFloating,
@@ -93,7 +101,7 @@ export default mixins(
     },
     genButton (value: string, isFloating: boolean, formatter: DatePickerFormatter) {
       const isAllowed = isDateAllowed(value, this.min, this.max, this.allowedDates)
-      const isSelected = Array.isArray(this.value) ? this.value.indexOf(value) !== -1 : value === this.value
+      const isSelected = this.isSelected(value)
       const isCurrent = value === this.currentDate
       const setColor = isSelected ? this.setBackgroundColor : this.setTextColor
       const color = (isSelected || isCurrent) && (this.color || 'accent')

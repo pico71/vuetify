@@ -154,6 +154,7 @@ export default mixins(
           scrollable: this.scrollable,
           showWeekNumbers: this.showWeekNumbers,
           pickerDate: this.pickerDate,
+          range: this.range,
           value: this.value,
         },
         on: {
